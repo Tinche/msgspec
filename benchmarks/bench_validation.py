@@ -8,6 +8,7 @@ from typing import Annotated, List, Literal, Union
 
 import attrs
 import cattrs.preconf.orjson
+import cattrs.fns
 import pydantic
 from generate_data import make_filesystem_data
 from mashumaro.mixins.orjson import DataClassORJSONMixin
@@ -93,7 +94,6 @@ class FileAttrs:
     created_at: datetime.datetime
     updated_at: datetime.datetime
     nbytes: int
-    type: Literal["file"] = "file"
 
 
 @attrs.define
@@ -103,11 +103,11 @@ class DirectoryAttrs:
     created_at: datetime.datetime
     updated_at: datetime.datetime
     contents: List[Union[FileAttrs, DirectoryAttrs]]
-    type: Literal["directory"] = "directory"
 
 
 def bench_cattrs(n):
     converter = cattrs.preconf.orjson.make_converter()
+    converter.register_unstructure_hook(datetime.datetime, cattrs.fns.identity)
     return bench(
         converter.dumps,
         lambda msg: converter.loads(msg, DirectoryAttrs),
